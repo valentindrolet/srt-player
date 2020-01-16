@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SrtPlayer.Windows"
         mc:Ignorable="d"
-        Height="150" Width="1400"
+        Height="150" Width="800"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -25,7 +25,7 @@
 
     <Grid>
         <Grid  MouseEnter="Grid_MouseEnter" MouseLeave="Grid_MouseLeave">
-            <Canvas Name="cnv_sub" Width="1400" Background="DarkGray" Opacity="0.3" MouseDown="Canvas_MouseDown">
+            <Canvas Name="cnv_sub" Width="800" Background="Black" Opacity="{Binding CanvasOpacity}" MouseDown="Canvas_MouseDown">
             </Canvas>
 
             <TextBlock Text="{Binding FileTitle}"  Visibility="{Binding IsOptionsVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>

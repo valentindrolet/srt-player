@@ -47,6 +47,13 @@ namespace SrtPlayer.ViewModels
 
 		private string _fileTitle;
 
+		private double _canvasOpacity;
+
+		// not 0 because the mouse enter event wouldn't be trigger
+		private double _transparentOpacity = 0.005d;
+
+		private double _normalOpacity = 0.3d;
+
 		#endregion
 
 		#region Properties
@@ -63,6 +70,8 @@ namespace SrtPlayer.ViewModels
 				{
 					this._firstSubtitleLine = value;
 					NotifyPropertyChanged();
+
+					SetCanvasOpacity();
 				}
 			}
 		}
@@ -209,6 +218,8 @@ namespace SrtPlayer.ViewModels
 				{
 					this._isOptionsVisible = value;
 					NotifyPropertyChanged();
+
+					SetCanvasOpacity();
 				}
 			}
 		}
@@ -229,6 +240,21 @@ namespace SrtPlayer.ViewModels
 			}
 		}
 
+		public double CanvasOpacity
+		{
+			get
+			{
+				return this._canvasOpacity;
+			}
+			set
+			{
+				if (value != this._canvasOpacity)
+				{
+					this._canvasOpacity = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
 
 		public RelayCommand TimeBackwardCommand { get; set; }
 
@@ -414,6 +440,14 @@ namespace SrtPlayer.ViewModels
 		private void SetActualTimeInfo()
 		{
 			this.ActualTimerInfo = this._actualTimer.ToString("hh':'mm':'ss'.'ff");
+		}
+
+		private void SetCanvasOpacity()
+		{
+			this.CanvasOpacity = 
+				string.IsNullOrEmpty(this.FirstSubtitleLine) && !this.IsOptionsVisible
+					? this._transparentOpacity
+					: this._normalOpacity;
 		}
 
 		private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
