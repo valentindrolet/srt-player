@@ -1,0 +1,9 @@
+﻿################################################################################
+# Ce fichier .gitignore a été automatiquement créé par Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/SrtPlayer/bin
+/SrtPlayer/obj
+/SrtPlayer/Properties
+/SrtPlayer/SrtPlayer.csproj.user
