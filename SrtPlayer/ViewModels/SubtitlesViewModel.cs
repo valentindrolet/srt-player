@@ -316,6 +316,7 @@ namespace SrtPlayer.ViewModels
 			if (this._isResumeFile)
 			{
 				this._timeGap = new TimeSpan(this.UserProfile.LastPlayedFileTimeTicks);
+				this._isResumeFile = false;
 			}
 			else
 			{
