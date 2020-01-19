@@ -1,8 +1,7 @@
-﻿using System;
+﻿using SrtPlayer.ViewModels;
+using System;
 using System.Windows;
 using System.Windows.Input;
-using SrtPlayer.Objects;
-using SrtPlayer.ViewModels;
 
 namespace SrtPlayer.Windows
 {
@@ -10,13 +9,13 @@ namespace SrtPlayer.Windows
 	{
 		SubtitlesViewModel _subtitlesViewModel;
 
-		public SubtitlesWindow(SrtFile srtFile)
+		public SubtitlesWindow(SubtitlesViewModel subtitlesViewModel)
 		{
 			InitializeComponent();
 
-			_subtitlesViewModel = new SubtitlesViewModel(srtFile);
+			this._subtitlesViewModel = subtitlesViewModel;
 
-			base.DataContext = _subtitlesViewModel;
+			base.DataContext = this._subtitlesViewModel;
 
 			this.Topmost = true;
 
@@ -65,6 +64,11 @@ namespace SrtPlayer.Windows
 		private void Window_Deactivated(object sender, EventArgs e)
 		{
 			this._subtitlesViewModel.WindowDeactivated();
+		}
+
+		private void Window_Closed(object sender, EventArgs e)
+		{
+			this._subtitlesViewModel.WindowClosed();
 		}
 	}
 }

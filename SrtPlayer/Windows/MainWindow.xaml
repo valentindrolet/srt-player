@@ -8,32 +8,52 @@
         Width="700"
         Height="250"
         Closed="Window_Closed">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
+    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="80"/>
             <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="40"/>
             <RowDefinition Height="80"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="50"/>
+            <ColumnDefinition Width="auto"/>
+        </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center">
-            <TextBlock Text="Choose the srt file" HorizontalAlignment="Center"/>
-            <TextBox Name="txb_fileName"
+        <RadioButton GroupName="filePlayChoice"
+                     Visibility="{Binding IsFilePlayChoiceVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                     IsChecked="{Binding IsResumeFile}"
+                     Grid.Column="0" Grid.Row="1" HorizontalAlignment="Center"/>
+        <StackPanel Visibility="{Binding IsFilePlayChoiceVisible, Converter={StaticResource BooleanToVisibilityConverter}}" Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+            <TextBlock Text="Resume the last file" HorizontalAlignment="Center" />
+            <TextBlock Text="{Binding ResumeLastSrtFileName}" Width="450" Grid.Column="1" Margin="20 0 0 20" FontWeight="Bold"/>
+        </StackPanel>
+
+        <RadioButton GroupName="filePlayChoice"
+                     Visibility="{Binding IsFilePlayChoiceVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                     IsChecked="{Binding IsPlayNewFile}"
+                     Grid.Column="0" Grid.Row="2" HorizontalAlignment="Center"/>
+        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" >
+            <TextBlock Text="Choose the srt file" HorizontalAlignment="Center" />
+            <TextBox Text="{Binding NewSrtFile}"
                      Width="450"
                      Margin="10 0 10 0"/>
-            <Button Name="btn_fileDiag"
-                    Click="btn_fileDiag_Click"
+            <Button Command="{Binding ChooseFileCommand}"
                     Content="..."
                     Width="30"/>
         </StackPanel>
 
-        <Button Name="btn_play"
-                Content="Open"
-                Click="btn_play_Click"
+        <Button Command="{Binding PlayFileCommand}"
+                Content="Play"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Grid.Row="2"
-                Width="80"
-                IsEnabled="False"/>
+                Grid.Row="3"
+                Grid.Column="1"
+                Width="80"/>
     </Grid>
 </Window>

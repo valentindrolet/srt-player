@@ -11,7 +11,8 @@
         Background="Transparent"
         MouseDown="Window_MouseDown"
         Deactivated="Window_Deactivated"
-        ShowActivated="False">
+        ShowActivated="False"
+        Closed="Window_Closed">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
@@ -28,7 +29,7 @@
             <Canvas Name="cnv_sub" Width="800" Background="Black" Opacity="{Binding CanvasOpacity}" MouseDown="Canvas_MouseDown">
             </Canvas>
 
-            <TextBlock Text="{Binding FileTitle}"  Visibility="{Binding IsOptionsVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding FileTitle}" Visibility="{Binding IsOptionsVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             
             <StackPanel Width="{Binding ActualWidth, ElementName=cnv_sub}" 
                     Height="{Binding ActualHeight, ElementName=cnv_sub}">

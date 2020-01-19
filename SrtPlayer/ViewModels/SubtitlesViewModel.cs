@@ -1,15 +1,14 @@
-﻿using System;
-using System.ComponentModel;
+﻿using SrtPlayer.Helpers;
+using SrtPlayer.Objects;
+using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Windows.Threading;
-using SrtPlayer.Objects;
 
 namespace SrtPlayer.ViewModels
 {
-	public class SubtitlesViewModel : INotifyPropertyChanged
+	public class SubtitlesViewModel : AbstractViewModel
 	{
 		#region Fields
 
@@ -29,17 +28,11 @@ namespace SrtPlayer.ViewModels
 
 		private Stopwatch _stopwatch;
 
-		private TimeSpan _timeInterval;
-
 		private TimeSpan _endTime;
 
 		private bool _isPlayVisible;
 
 		private TimeSpan _timeGap;
-
-		private bool _autoPlayWindowDeactivated;
-
-		private bool _playNextFile;
 
 		private bool _isOptionsVisible;
 
@@ -54,9 +47,13 @@ namespace SrtPlayer.ViewModels
 
 		private double _normalOpacity = 0.3d;
 
+		private bool _isResumeFile;
+
 		#endregion
 
 		#region Properties
+
+		public UserProfile UserProfile { get; set; }
 
 		public string FirstSubtitleLine
 		{
@@ -128,14 +125,14 @@ namespace SrtPlayer.ViewModels
 		{
 			get
 			{
-				return this._timeInterval.TotalMilliseconds.ToString();
+				return this.UserProfile.TimeIntervalMs.ToString();
 			}
 			set
 			{
-				if (value != this._timeInterval.TotalMilliseconds.ToString()
+				if (value != this.UserProfile.TimeIntervalMs.ToString()
 					&& int.TryParse(value, out int msTime))
 				{
-					this._timeInterval = TimeSpan.FromMilliseconds(msTime);
+					this.UserProfile.TimeIntervalMs = msTime;
 					NotifyPropertyChanged();
 				}
 			}
@@ -178,13 +175,13 @@ namespace SrtPlayer.ViewModels
 		{
 			get
 			{
-				return this._autoPlayWindowDeactivated;
+				return this.UserProfile.AutoPlayWindowDeactived;
 			}
 			set
 			{
-				if (value != this._autoPlayWindowDeactivated)
+				if (value != this.UserProfile.AutoPlayWindowDeactived)
 				{
-					this._autoPlayWindowDeactivated = value;
+					this.UserProfile.AutoPlayWindowDeactived = value;
 					NotifyPropertyChanged();
 				}
 			}
@@ -194,13 +191,13 @@ namespace SrtPlayer.ViewModels
 		{
 			get
 			{
-				return this._playNextFile;
+				return this.UserProfile.PlayNextDirectoryFile;
 			}
 			set
 			{
-				if (value != this._playNextFile)
+				if (value != this.UserProfile.PlayNextDirectoryFile)
 				{
-					this._playNextFile = value;
+					this.UserProfile.PlayNextDirectoryFile = value;
 					NotifyPropertyChanged();
 				}
 			}
@@ -266,19 +263,12 @@ namespace SrtPlayer.ViewModels
 
 		#endregion
 
-		#region Events
-
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		#endregion
-
 		#region Constructors
 
-		public SubtitlesViewModel(SrtFile srtFile)
+		public SubtitlesViewModel(SrtFile srtFile, UserProfile userProfile, bool isResumeFile)
 		{
-			this._timeInterval = TimeSpan.FromMilliseconds(1000);
-			this.AutoPlayWindowDeactivated = true;
-			this.PlayNextFile = true;
+			this.UserProfile = userProfile;
+			this._isResumeFile = isResumeFile;
 
 			InitializeFile(srtFile);
 
@@ -299,6 +289,13 @@ namespace SrtPlayer.ViewModels
 			}
 		}
 
+		public void SaveUserProfile()
+		{
+			this.UserProfile.LastPlayedFile = this._srtFile.FileInfo.FullName;
+			this.UserProfile.LastPlayedFileTimeTicks = this.ActualTimer.Ticks;
+			UserProfileHelper.SaveUserProfile(this.UserProfile);
+		}
+
 		private void InitializeFile(SrtFile srtFile)
 		{
 			this._srtFile = srtFile;
@@ -316,11 +313,18 @@ namespace SrtPlayer.ViewModels
 			this._dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
 			this.IsPlayVisible = true;
 
-			this.ActualTimer = TimeSpan.Zero;
-			this._timeGap = TimeSpan.Zero;
+			if (this._isResumeFile)
+			{
+				this._timeGap = new TimeSpan(this.UserProfile.LastPlayedFileTimeTicks);
+			}
+			else
+			{
+				this._timeGap = TimeSpan.Zero;
+			}
 
-			SetDefaultSubtitles(false);
-			SetActualTimeInfo();
+			this.ActualTimer = this.ElapsedTime;
+
+			SetActualSrtItem();
 
 			if (this.PlayNextFile)
 			{
@@ -336,10 +340,10 @@ namespace SrtPlayer.ViewModels
 
 		private void ExecuteTimeBackwardCommand()
 		{
-			TimeSpan futureTime = this.ActualTimer.Subtract(this._timeInterval);
+			TimeSpan futureTime = this.ActualTimer.Subtract(this.UserProfile.TimeInterval);
 
 			if (futureTime > TimeSpan.Zero)
-				this._timeGap = this._timeGap.Subtract(this._timeInterval);
+				this._timeGap = this._timeGap.Subtract(this.UserProfile.TimeInterval);
 			else
 				this._timeGap = this._timeGap.Subtract(this.ActualTimer);
 
@@ -353,10 +357,10 @@ namespace SrtPlayer.ViewModels
 
 		private void ExecuteTimeForwardCommand()
 		{
-			TimeSpan futureTime = this.ActualTimer.Add(this._timeInterval);
+			TimeSpan futureTime = this.ActualTimer.Add(this.UserProfile.TimeInterval);
 
 			if (futureTime < this._endTime)
-				this._timeGap = this._timeGap.Add(this._timeInterval);
+				this._timeGap = this._timeGap.Add(this.UserProfile.TimeInterval);
 			else
 				this._timeGap = this._timeGap.Add(this._endTime.Subtract(this.ActualTimer));
 
@@ -394,18 +398,7 @@ namespace SrtPlayer.ViewModels
 					|| this.ActualTimer < this._actualSrtItem.BeginTime
 					|| this.ActualTimer > this._actualSrtItem.EndTime)
 				{
-					var actualItem = this._srtFile.SrtItems.Find(item => item.BeginTime <= this.ActualTimer && this.ActualTimer <= item.EndTime);
-
-					if (actualItem != null)
-					{
-						this._actualSrtItem = actualItem;
-						this.FirstSubtitleLine = this._actualSrtItem.Lines.Count > 0 ? this._actualSrtItem.Lines[0] : string.Empty;
-						this.SecondSubtitleLine = this._actualSrtItem.Lines.Count > 1 ? this._actualSrtItem.Lines[1] : string.Empty;
-					}
-					else
-					{
-						SetDefaultSubtitles();
-					}
+					SetActualSrtItem();
 				}
 			}
 			else
@@ -422,6 +415,22 @@ namespace SrtPlayer.ViewModels
 			}
 		}
 
+		private void SetActualSrtItem()
+		{
+			var actualItem = this._srtFile.SrtItems.Find(item => item.BeginTime <= this.ActualTimer && this.ActualTimer <= item.EndTime);
+
+			if (actualItem != null)
+			{
+				this._actualSrtItem = actualItem;
+				this.FirstSubtitleLine = this._actualSrtItem.Lines.Count > 0 ? this._actualSrtItem.Lines[0] : string.Empty;
+				this.SecondSubtitleLine = this._actualSrtItem.Lines.Count > 1 ? this._actualSrtItem.Lines[1] : string.Empty;
+			}
+			else
+			{
+				SetDefaultSubtitles();
+			}
+		}
+
 		private void LoadNextFile()
 		{
 			this._nextFile = this._srtFile.FindNextFile();
@@ -431,10 +440,10 @@ namespace SrtPlayer.ViewModels
 			}
 		}
 
-		private void SetDefaultSubtitles(bool empty = true)
+		private void SetDefaultSubtitles()
 		{
-			this.FirstSubtitleLine = empty ? string.Empty : "First subtitles line";
-			this.SecondSubtitleLine = empty ? string.Empty : "Second subtitles line";
+			this.FirstSubtitleLine = this.ActualTimer > TimeSpan.Zero ? string.Empty : this._srtFile.FileInfo.Name;
+			this.SecondSubtitleLine = string.Empty;
 		}
 
 		private void SetActualTimeInfo()
@@ -444,15 +453,17 @@ namespace SrtPlayer.ViewModels
 
 		private void SetCanvasOpacity()
 		{
-			this.CanvasOpacity = 
+			this.CanvasOpacity =
 				string.IsNullOrEmpty(this.FirstSubtitleLine) && !this.IsOptionsVisible
 					? this._transparentOpacity
 					: this._normalOpacity;
 		}
 
-		private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
+		public void WindowClosed()
 		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+			this.SaveUserProfile();
+			this._dispatcherTimer.Stop();
+			this._stopwatch.Stop();
 		}
 
 		#endregion

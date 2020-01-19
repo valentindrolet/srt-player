@@ -49,8 +49,10 @@ namespace SrtPlayer.Objects
 							switch (actualItemPart)
 							{
 								case 0:
-									srtItem = new SrtItem();
-									srtItem.Lines = new List<string>();
+									srtItem = new SrtItem
+									{
+										Lines = new List<string>()
+									};
 									actualItemPart++;
 									break;
 								case 1:
@@ -90,12 +92,15 @@ namespace SrtPlayer.Objects
 			var actualDirectory = this.FileInfo.Directory;
 			var directoryFiles = actualDirectory.EnumerateFiles().ToList();
 
-			int actualFileIndex = directoryFiles.FindIndex(f => f.Name == this.FileInfo.Name);
+			int actualFileIndex = directoryFiles.FindIndex(f => f.Name == this.FileInfo.Name) + 1;
 
-			var nextFileInfo = directoryFiles.ElementAt(actualFileIndex + 1);
-			if (nextFileInfo != null)
+			if (directoryFiles.Count > actualFileIndex)
 			{
-				return new SrtFile(nextFileInfo.FullName);
+				var nextFileInfo = directoryFiles.ElementAt(actualFileIndex);
+				if (nextFileInfo != null)
+				{
+					return new SrtFile(nextFileInfo.FullName);
+				}
 			}
 
 			return null;
